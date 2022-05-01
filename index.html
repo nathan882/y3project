@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+
+    <title>FSM Maker</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <!-- Local CSS -->
+    <link href="style.css" rel="stylesheet">
+
+  </head>
+
+  <body onload="init();">
+
+    <!-- Options Sidebar -->
+    <div id="sidebar" class="overflow-auto">
+      <ul class="list-unstyled">
+        <li>
+          <p>FSM Maker<button class="btn fa-solid fa-circle-info" id="tutorialbtn" onclick="tutorialmodal()"></button></p>
+        </li>
+        <li class="border-top my-3"></li>
+        <!-- Overall -->
+        <li>
+          <ul class="list-unstyled">
+            <li>
+              <button class="btn btn-dark my-1 btn-overall" onclick="addState()">Add State</button>
+              <button class="btn btn-dark my-1 btn-overall" onclick="steps()">Step</button>
+              <button class="btn btn-dark my-1 btn-overall" onclick="reset()">Reset</button>
+            </li>
+            <li>
+              <button class="btn btn-dark my-1 btn-overall" onclick="verify()">Verify</button>
+              <button class="btn btn-dark my-1 btn-overall" onclick="verilogCheck()">Convert to Verilog</button>
+            </li>
+            <li>
+              <button class="btn btn-dark my-1 btn-overall" onclick="exportGraph()">Export</button>
+              <button class="btn btn-dark my-1 btn-overall" onclick="importGraph()">Import</button>
+            </li>
+          </ul>
+        </li>
+        <!-- Inputs Table -->
+        <li>
+          <button class="btn-toggle align-items-center" data-bs-toggle="collapse" data-bs-target="#inputs">Inputs</button>
+          <ul class="collapse list-unstyled" id="inputs">
+            <li>
+              <div class="input-group">
+                <button class="btn btn-overall btn-dark" type="button" id="addInBtn" onclick="addInput()">Add Input</button>
+                <input class="form-control" placeholder="# bits" type="text" id="inSize">
+              </div>
+              <input class="form-control" placeholder="Name" type="text" id="inName">
+            </li>
+            <li>
+              <div class="table-responsive">
+                <table class="table" id="inTable"></table>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <!-- Outputs Table -->
+        <li>
+          <button class="btn-toggle align-items-center" data-bs-toggle="collapse" data-bs-target="#outputs">Outputs</button>
+          <ul class="collapse list-unstyled" id="outputs">
+            <li>
+              <div class="input-group">
+                <button class="btn btn-overall btn-dark" type="button" id="addOutBtn" onclick="addOutput()">Add Output</button>
+                <input class="form-control" placeholder="Name" type="text" id="outName">
+              </div>
+            </li>
+            <li>
+              <div class="table-responsive">
+                <table class="table" id="outTable"></table>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <!-- State Options -->
+        <li>
+          <button class="btn-toggle align-items-center" data-bs-toggle="collapse" data-bs-target="#stOps">State</button>
+          <ul class="collapse list-unstyled disabled" id="stOps">
+            <li><h3 id="stId">State ID</h3></li>
+            <li><p id="stName">State Name</p></li>
+            <li>
+              <div class="input-group">
+                <button class="btn btn-overall btn-dark" type="button" id="textBtn" onclick="setStateName()">Set Name</button>
+                <input class="form-control" type="text" placeholder="" id="stateName"></input> <!--CHANGE NAME-->
+              </div>
+            </li>
+            <li>
+              <button class="btn btn-dark my-1 btn-overall" type="button" id="deleteBtn" onclick="deleteElement()">Delete</button>
+              <button class="btn btn-dark my-1 btn-overall" type="button" id="strtStBtn" onclick="setResetState()">Set as Reset State</button>
+            </li>
+            <li><button class="btn btn-dark my-1 btn-overall" type="button" id="addOutRule" onclick="addOutputRule()">Add Output Rule</button></li>
+            <li>
+              <div class="table-responsive">
+                <table class="table" id="ruleTable"></table>
+              </div>
+            </li>
+          </ul>
+        </li>
+        <!-- Transition Options -->
+        <li>
+          <button class="btn-toggle align-items-center" data-bs-toggle="collapse" data-bs-target="#trOps">Transition</button>
+          <ul class="collapse list-unstyled disabled" id="trOps">
+            <!-- <li><h3 id="trId">Transition ID</h3></li> -->
+            <li><button class="btn btn-dark my-1 btn-overall" type="button" id="deleteBtn" onclick="deleteElement()">Delete</button></li>
+            <li>
+              <div class="input-group">
+                <button class="btn btn-overall btn-dark" type="button" id="" onclick="checkLogic()">Set Logic</button>
+                <input class="form-control" type="text" placeholder="" id="logicIn"></input>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Canvas -->
+    <div id="content">
+      <canvas id="fsmCanvas"></canvas>
+    </div>
+
+    <!-- Div to store bootstrap alerts -->
+    <div id="alerts"></div>
+
+    <!-- Verilog Options Modal -->
+    <div class="modal fade" id="verilogModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Verilog Options</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="resetType">
+            <p>Choose Reset Type</p>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="resetRadio" id="async">
+              <label class="form-check-label" for="async">
+                Asynchronous
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="resetRadio" id="sync" checked>
+              <label class="form-check-label" for="sync">
+                Synchronous
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="verilog()">Generate Verilog Code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div class="modal fade text-center" id="tutorialModal" tabindex="-1">
+      <div class="modal-dialog modal-lg ">
+        <!-- States & Transitions -->
+        <div class="modal-content" id="tutorialModal1">
+          <div class="modal-header">
+            <h5 class="modal-title">Tutorial - States & Transitions</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="tutorial-main">
+            <p>Click <button type="button" class="btn btn-overall btn-dark btn-sm">Add State</button> to add a state to the diagram</p>
+            <p>Connect them by double-clicking</p>
+          </div>
+          <div class="accordion" id="transitionAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                  Single Transition
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#transitionAccordion">
+                <div class="accordion-body">
+                  <video width="100%" height="200" loop autoplay muted>
+                    <source src="src/single.webm" type="video/webm">
+                  </video>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                  Double Transition
+                </button>
+              </h2>
+              <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#transitionAccordion">
+                <div class="accordion-body">
+                  <video width="100%" height="200" loop autoplay muted>
+                    <source src="src/double.webm" type="video/webm">
+                  </video>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                  Self Transition
+                </button>
+              </h2>
+              <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#transitionAccordion">
+                <div class="accordion-body">
+                  <video width="100%" height="200" loop autoplay muted>
+                    <source src="src/self.webm" type="video/webm">
+                  </video>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('+', 1)">Next</button>
+          </div>
+        </div>
+        <!-- Inputs & Outputs -->
+        <div class="modal-content modal-hide" id="tutorialModal2">
+          <div class="modal-header">
+            <h5 class="modal-title">Tutorial - Inputs & Outputs</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">- Create inputs and outputs using the sidebar</li>
+              <li class="list-group-item">- The size of an input in bits must be defined. For example, an input of size 2 bits can have values 0, 1, 2, 3.</li>
+              <li class="list-group-item">- Options for a state/transition can be accessed by clicking on the state/transition you wish to modify</li>
+              <li class="list-group-item">- By adding an output rule to a state, when the state is moved into the output specified will be set to the value specified.</li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('-', 2)">Prev</button>
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('+', 2)">Next</button>
+          </div>
+        </div>
+        <!-- Logic Statements -->
+        <div class="modal-content modal-hide" id="tutorialModal3">
+          <div class="modal-header">
+            <h5 class="modal-title">Tutorial - Logic Statements</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="tutorial-main">
+            Logic statements can be added to transitions to make them conditional. The operators supported are listed below:
+            <div class="container border" id="logicTable">
+              <div class="row">
+                <div class="col border">&& - and</div>
+                <div class="col border">|| - or</div>
+                <div class="col border">! - not</div>
+              </div>
+              <div class="row">
+                <div class="col border">() - parenthesis</div>
+                <div class="col border">== - equals</div>
+              </div>
+              <div class="row">
+                <div class="col border">> - greater than</div>
+                <div class="col border">>= - greater than or equals</div>
+              </div>
+              <div class="row">
+                <div class="col border">< - less than</div>
+                <div class="col border"><= - less than or equals</div>
+              </div>
+              <div class="row">
+                <div class="col border">0x - hexadecimal number</div>
+                <div class="col border">0b - binary number</div>
+              </div>
+            </div>
+            For example, the statement <br>'(a == 0) || (a == 0xa)'<br> would be true when input 'a' is 0 or 10
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('-', 3)">Prev</button>
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('+', 3)">Next</button>
+          </div>
+        </div>
+        <!-- Step & Reset -->
+        <div class="modal-content modal-hide" id="tutorialModal4">
+          <div class="modal-header">
+            <h5 class="modal-title">Tutorial - Step & Reset</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">- The states can be visually 'stepped' through by first setting one state as a reset state (in state specific options) and then pressing <button type="button" class="btn btn-overall btn-dark btn-sm">Step</button> to move through or <button type="button" class="btn btn-overall btn-dark btn-sm">Reset</button> to return to the start. Each press of the step button can be thought of as a rising clock edge.</li>
+              <li class="list-group-item">- When stepping, a transition will only be taken if the transition's logic statement evaluates to true. For example, if the statement is 'a' the transition will be taken when input a is equal to 1, but not when a is equal to 0.</li>
+              <li class="list-group-item">- Transitions without a logic statement are treated as unconditional - they will always be taken on the next clock edge.</li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('-', 4)">Prev</button>
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('+', 4)">Next</button>
+          </div>
+        </div>
+        <!-- Verify -->
+        <div class="modal-content modal-hide" id="tutorialModal5">
+          <div class="modal-header">
+            <h5 class="modal-title">Tutorial - Verification</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="tutorial-main">
+            When Verify or Convert to Verilog is pressed, the correctness of the design will be checked. To be correct:
+            <ol class="list-group list-group-flush list-group-numbered">
+              <li class="list-group-item">
+                <b>Transitions should be deterministic</b><br>
+                For example, two unconditional transitions out of the same state would be impossible to implement in hardware since it isn't clear which transition should be taken at a given time.
+              </li>
+              <li class="list-group-item">
+                <b>States should be accessible</b><br>
+                All states (except the reset state) must have a transition into them.
+              </li>
+            </ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('-', 5)">Prev</button>
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('+', 5)">Next</button>
+          </div>
+        </div>
+        <!-- Final & Showcase -->
+        <div class="modal-content modal-hide" id="tutorialModal6">
+          <div class="modal-header">
+            <h5 class="modal-title">Tutorial - Example Design</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="tutorial-main">
+            You should now be ready to start! If anything goes wrong a message will popup explaining the problem. <br><br>
+            To load an example design which showcases all functionalities press the button below (NOTE: this will override your current design)
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialStep('-', 6)">Prev</button>
+            <button type="button" class="btn btn-overall btn-dark" onclick="tutorialExample()">Load Example</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <!-- CreateJS (Canvas Library) - had to change from code.createjs.com since it went down -->
+    <script src="https://cdn.jsdelivr.net/npm/createjs@1.0.1/builds/1.0.0/createjs.min.js" integrity="sha256-2wdA6xeHmnRYyJJeIH/YDKhCT4DdzeLN+8T39bRO7R0=" crossorigin="anonymous"></script>
+    <!-- OhmJS (Grammar Library) -->
+    <script src="https://unpkg.com/ohm-js/dist/ohm.min.js"></script>
+    <!-- FileSaverJS -->
+    <script src="https://unpkg.com/file-saver/dist/FileSaver.min.js"></script>
+    <!-- Fonts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+
+    <!-- Local JS Files -->
+    <script src="js/init.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/transition.js"></script>
+    <script src="js/globals.js"></script>
+    <script src="js/verification.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/output.js"></script>
+    <script src="js/funcs.js"></script>
+    <script src="js/grammar.js"></script>
+    <script src="js/verilog.js"></script>
+    <!-- Used to load example diagram -->
+    <span style="display: none;" id="exampleJSON">{"outputs":[{"name":"val","value":"5"}],"inputs":[{"name":"valIn","value":"0","size":"1"},{"name":"numIn","value":"0","size":"2"}],"states":[{"id":0,"x":142,"y":401,"name":"A","reset_st":true,"output_rules":[["val","5"]]},{"id":1,"x":550,"y":400,"name":"C","output_rules":[["val","15"]]},{"id":2,"x":350,"y":160,"name":"B","output_rules":[["val","10"]]}],"transitions":[{"startStId":0,"endStId":2,"logic":"valIn"},{"startStId":2,"endStId":1,"logic":"numIn == 0"},{"startStId":1,"endStId":0},{"startStId":0,"endStId":1,"logic":"!valIn"},{"startStId":2,"endStId":2,"logic":"numIn >= 1"}],"nextStId":3}</span>
+
+  </body>
+
+
+</html>
