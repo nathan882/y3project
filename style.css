@@ -75,6 +75,10 @@
 
 #tutorialbtn {
   float: right;
+  background-image: url("src/circle-info-solid.svg"); /* use local instead of fa for better redundancy */
+  background-repeat: no-repeat;
+  height: 20px;
+  margin-top: 4px;
 }
 
 .modal-hide {
